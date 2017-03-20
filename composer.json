@@ -1,0 +1,19 @@
+{
+    "name": "meathill/master-meat-weixin",
+    "description": "a weixin plugin",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Meathill",
+            "email": "meathill@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "MasterMeat\\": "src"
+        }
+    }
+}
