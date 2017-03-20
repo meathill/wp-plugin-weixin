@@ -10,6 +10,13 @@ namespace MasterMeat;
  */
 class Worker {
   const DB_VERSION = '1.0';
+  const DB_VERSION_NAME = 'mm_weixin_db_version';
+
+  public function checkDB() {
+    if (get_site_option(self::DB_VERSION_NAME) != self::DB_VERSION) {
+      $this->install();
+    }
+  }
 
   public function install() {
     global $wpdb;
@@ -23,12 +30,12 @@ class Worker {
             `post_id` INT NOT NULL,
             `fetch_time` DATETIME NOT NULL,
             `status` TINYINT(1) DEFAULT 0,
-            PRIMARY KEY `id`
+            PRIMARY KEY (`id`)
           ) $charset";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql);
 
-    add_option('mm_weixin_db_version', self::DB_VERSION);
+    add_option(self::DB_VERSION_NAME, self::DB_VERSION);
   }
 }

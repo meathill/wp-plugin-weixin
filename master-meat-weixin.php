@@ -28,4 +28,4 @@ require 'vendor/autoload.php';
 use MasterMeat\Weixin;
 
 // Global for backwards compatibility.
-$GLOBALS['MASTER_MEAT_WEIXIN'] = Weixin::getInstance();
+$GLOBALS['MASTER_MEAT_WEIXIN'] = Weixin::getInstance(__FILE__);
