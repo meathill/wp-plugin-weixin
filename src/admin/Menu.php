@@ -16,7 +16,8 @@ class Menu {
   }
 
   public function init() {
-    add_options_page( '微信助手', '肉大师微信助手', 'manage_options', 'my-unique-identifier', [$this, 'onOptions'] );
+    add_options_page( '肉大师微信助手', '微信助手', 'manage_options', 'mm-weixin-options', [$this, 'onOptions'] );
+
   }
 
   public function onOptions() {
