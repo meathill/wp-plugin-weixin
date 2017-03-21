@@ -2,9 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>测试</title>
+  <title>肉大师微信助手 - 设置</title>
+  <link rel="stylesheet" href="/wp-content/plugins/master-meat-weixin/node_modules/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/wp-content/plugins/master-meat-weixin/node_modules/font-awesome/css/font-awesome.min.css">
 </head>
 <body>
-<h1>hello, plugin</h1>
+<div class="container-fluid">
+  <ul class="nav nav-tabs mt-3 mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" role="tab" href="#article-list">抓取文章</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" role="tab" href="#setting">设置</a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane active" id="article-list" role="tabpanel">
+      <button class="btn btn-primary" @click="fetch(this)"><i class="fa fa-cloud-download"></i> 抓取文章信息</button>
+    </div>
+    <div class="tab-pane" id="settings" role="tabpanel">
+      <form method="post" action="{{admin_url}}">
+        <input type="hidden" name="action" value="mm_weixin_save_config">
+        <div class="form-group row">
+          <label class="col-2 col-form-label" for="app-id">
+            AppID
+          </label>
+          <div class="col-10">
+            <input id="app-id" name="app-id" class="form-control" value="{{app_id}}">
+          </div>
+        </div>
+        <div class="form-group row">
+          <label class="col-2 col-form-label" for="app-secret">
+            AppSecret
+          </label>
+          <div class="col-10">
+            <input type="password" id="app-secret" name="app-secret" class="form-control" value="{{app_secret}}">
+          </div>
+        </div>
+        <div class="form-group row">
+          <label class="col-2 col-form-label" for="EncodingAESKey">
+            EncodingAESKey
+          </label>
+          <div class="col-10">
+            <input type="password" id="EncodingAESKey" name="EncodingAESKey" class="form-control" value="{{EncodingAESKey}}">
+          </div>
+        </div>
+        <div class="col-10 offset-2">
+          <button class="btn btn-primary">
+            <i class="fa fa-save"></i> 保存设置
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script src="/wp-content/plugins/master-meat-weixin/node_modules/tether/dist/js/tether.min.js"></script>
+<script src="/wp-content/plugins/master-meat-weixin/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="/wp-content/plugins/master-meat-weixin/node_modules/vue/dist/vue.min.js"></script>
+<script src="/wp-content/plugins/master-meat-weixin/js/admin.js"></script>
 </body>
 </html>

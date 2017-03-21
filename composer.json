@@ -10,7 +10,9 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {},
+    "require": {
+        "mustache/mustache": "~2.5"
+    },
     "autoload": {
         "psr-4": {
             "MasterMeat\\": "src"
