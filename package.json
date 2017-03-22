@@ -4,7 +4,9 @@
   "description": "a plugin for wp communicating with weixin",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch:js": "webpack",
+    "watch:stylus": "stylus -w styl/screen.styl -o css/ --sourcemap"
   },
   "repository": {
     "type": "git",
@@ -18,9 +20,18 @@
   },
   "homepage": "https://github.com/meathill/wp-plugin-weixin#readme",
   "devDependencies": {
+    "babel-core": "^6.24.0",
+    "babel-loader": "^6.4.1",
+    "babel-plugin-transform-object-assign": "^6.22.0",
+    "babel-preset-env": "^1.2.2",
     "bootstrap": "^4.0.0-alpha.6",
+    "css-loader": "^0.27.3",
+    "element-ui": "^1.2.5",
     "font-awesome": "^4.7.0",
     "vue": "^2.2.4",
+    "vue-loader": "^11.2.0",
+    "vue-resource": "^1.2.1",
+    "vue-template-compiler": "^2.2.4",
     "webpack": "^2.2.1"
   }
 }

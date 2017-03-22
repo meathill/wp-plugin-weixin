@@ -4,7 +4,6 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "a35a1c898eb9ac1dcce958f1ab4545c5",
     "content-hash": "84ff0debef69ef0c5e91ed892f7ce5cd",
     "packages": [
         {
@@ -17,7 +16,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bobthecow/mustache.php/zipball/a3f6d55996dd28b58f3a909d474189a3c1aa693f",
+                "url": "https://files.phpcomposer.com/files/bobthecow/mustache.php/a3f6d55996dd28b58f3a909d474189a3c1aa693f.zip",
                 "reference": "a3f6d55996dd28b58f3a909d474189a3c1aa693f",
                 "shasum": ""
             },
@@ -51,7 +50,7 @@
                 "mustache",
                 "templating"
             ],
-            "time": "2016-07-31 06:18:27"
+            "time": "2016-07-31T06:18:27+00:00"
         }
     ],
     "packages-dev": [],

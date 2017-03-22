@@ -19,7 +19,7 @@ class Menu {
   }
 
   public function init() {
-    add_options_page( '微信助手', '肉大师微信助手', 'manage_options', Weixin::ID, [$this, 'onOptions'] );
+    add_options_page( '肉大师微信助手', '微信助手', 'manage_options', Weixin::ID, [$this, 'onOptions'] );
   }
 
   public function onOptions() {
@@ -29,13 +29,10 @@ class Menu {
 
     $app_id = get_option(Weixin::PREFIX . 'app_id');
     $app_secret = get_option(Weixin::PREFIX . 'app_secret');
-    $aes = get_option(Weixin::PREFIX . 'EncodingAESKey');
-    $admin_url = admin_url('admin_post.php');
     $template = new Template($this->dir);
     echo $template->render('admin.html', [
       'app_id' => $app_id,
-      'app_secret' => $app_secret,
-      'EncodingAESKey' => $aes,
+      'app_secret' => $app_secret
     ]);
   }
 }

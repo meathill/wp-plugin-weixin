@@ -31,8 +31,8 @@ class Weixin {
     add_action('plugins_loaded', [$worker, 'checkDB']);
     add_action('admin_menu', [$menu, 'init']);
 
-    add_action('admin_post_mm_weixin_save_config', [$this, 'saveConfig']);
-    add_action('wp_ajax_fetch_news_list', [$this, 'fetchNewsList']);
+    add_action('wp_ajax_mm_weixin_save_config', [$this, 'saveConfig']);
+    add_action('wp_ajax_mm_weixin_fetch_news_list', [$this, 'fetchNewsList']);
   }
 
   public function fetchNewsList() {
@@ -71,15 +71,16 @@ class Weixin {
   }
 
   public function saveConfig() {
-    $app_id = $_REQUEST['app-id'];
-    $app_secret = $_REQUEST['app-secret'];
-    $EncodingAESKey = $_REQUEST['EncodingAESKey'];
+    $app_id = $_REQUEST['app_id'];
+    $app_secret = $_REQUEST['app_secret'];
 
     add_option(Weixin::PREFIX . 'app_id', $app_id);
     add_option(Weixin::PREFIX . 'app_secret', $app_secret);
-    add_option(Weixin::PREFIX . 'EncodingAESKey', $EncodingAESKey);
 
-    wp_redirect(admin_url('admin.php?page=' . Weixin::ID));
+    $this->output([
+      'code' => 0,
+      'msg' => '保存成功',
+    ]);
   }
 
   static $instance;

@@ -16,7 +16,10 @@ wp-content/plugins/hello.php
 /sitemap.xml
 /sitemap.xml.gz
 
-
+# repo
 /vendor/
-
 /node_modules
+
+# build
+/css
+dist

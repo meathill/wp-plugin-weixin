@@ -3,65 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <title>肉大师微信助手 - 设置</title>
-  <link rel="stylesheet" href="/wp-content/plugins/master-meat-weixin/node_modules/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/wp-content/plugins/master-meat-weixin/node_modules/element-ui/lib/theme-default/index.css">
   <link rel="stylesheet" href="/wp-content/plugins/master-meat-weixin/node_modules/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/wp-content/plugins/master-meat-weixin/css/screen.css">
 </head>
 <body>
-<div class="container-fluid">
-  <ul class="nav nav-tabs mt-3 mb-3" role="tablist">
-    <li class="nav-item">
-      <a class="nav-link active" data-toggle="tab" role="tab" href="#article-list">抓取文章</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-toggle="tab" role="tab" href="#setting">设置</a>
-    </li>
-  </ul>
 
-  <div class="tab-content">
-    <div class="tab-pane active" id="article-list" role="tabpanel">
-      <button class="btn btn-primary" @click="fetch(this)"><i class="fa fa-cloud-download"></i> 抓取文章信息</button>
-    </div>
-    <div class="tab-pane" id="settings" role="tabpanel">
-      <form method="post" action="{{admin_url}}">
+<div id="mm-weixin-admin">
+  <el-tabs v-model="activeName" type="card">
+    <el-tab-pane label="抓取文章" name="weixin-article-list">
+      <el-button type="primary" :loading="false" @click="fetch">获取文章列表</el-button>
+    </el-tab-pane>
+    <el-tab-pane label="设置" name="settings">
+      <el-form ref="form" label-width="5rem">
         <input type="hidden" name="action" value="mm_weixin_save_config">
-        <div class="form-group row">
-          <label class="col-2 col-form-label" for="app-id">
-            AppID
-          </label>
-          <div class="col-10">
-            <input id="app-id" name="app-id" class="form-control" value="{{app_id}}">
-          </div>
-        </div>
-        <div class="form-group row">
-          <label class="col-2 col-form-label" for="app-secret">
-            AppSecret
-          </label>
-          <div class="col-10">
-            <input type="password" id="app-secret" name="app-secret" class="form-control" value="{{app_secret}}">
-          </div>
-        </div>
-        <div class="form-group row">
-          <label class="col-2 col-form-label" for="EncodingAESKey">
-            EncodingAESKey
-          </label>
-          <div class="col-10">
-            <input type="password" id="EncodingAESKey" name="EncodingAESKey" class="form-control" value="{{EncodingAESKey}}">
-          </div>
-        </div>
-        <div class="col-10 offset-2">
-          <button class="btn btn-primary">
-            <i class="fa fa-save"></i> 保存设置
-          </button>
-        </div>
-      </form>
-
-    </div>
-  </div>
+        <el-form-item label="AppID">
+          <el-input name="app_id" value="{{app_id}}"></el-input>
+        </el-form-item>
+        <el-form-item label="AppSecret">
+          <el-input name="app_id" value="{{app_secret}}"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" ref="submit-button" @click="saveSettings">保存</el-button>
+        </el-form-item>
+      </el-form>
+    </el-tab-pane>
+  </el-tabs>
 </div>
 
-<script src="/wp-content/plugins/master-meat-weixin/node_modules/tether/dist/js/tether.min.js"></script>
-<script src="/wp-content/plugins/master-meat-weixin/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="/wp-content/plugins/master-meat-weixin/node_modules/vue/dist/vue.min.js"></script>
-<script src="/wp-content/plugins/master-meat-weixin/js/admin.js"></script>
+<script src="/wp-content/plugins/master-meat-weixin/node_modules/vue-resource/dist/vue-resource.min.js"></script>
+<script src="/wp-content/plugins/master-meat-weixin/node_modules/element-ui/lib/index.js"></script>
+<script src="/wp-content/plugins/master-meat-weixin/dist/admin.bundle.js"></script>
 </body>
 </html>
