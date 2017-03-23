@@ -28,6 +28,7 @@
     "css-loader": "^0.27.3",
     "element-ui": "^1.2.5",
     "font-awesome": "^4.7.0",
+    "moment": "^2.18.1",
     "vue": "^2.2.4",
     "vue-loader": "^11.2.0",
     "vue-resource": "^1.2.1",

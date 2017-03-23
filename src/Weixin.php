@@ -22,7 +22,6 @@ class Weixin {
     $this->init_hooks($entry);
   }
 
-
   private function init_hooks($entry) {
     $dir = substr($entry, 0, strrpos($entry, '/') + 1);
     $worker = new Worker();
@@ -33,9 +32,12 @@ class Weixin {
 
     add_action('wp_ajax_mm_weixin_save_config', [$this, 'saveConfig']);
     add_action('wp_ajax_mm_weixin_fetch_news_list', [$this, 'fetchNewsList']);
+    add_action('wp_ajax_mm_weixin_import_article', [$this, 'importArticle']);
   }
 
   public function fetchNewsList() {
+    global $wpdb;
+
     $token = $this->fetchToken();
     $page = (int)$_REQUEST['page'];
     $api = 'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token=' . $token;
@@ -44,11 +46,37 @@ class Weixin {
       'offset' => $page * 20,
       'count' => 20
     ]);
+    $content = json_decode($content, true);
+
+    // 取已经导入过的文章
+    $media_ids = array_column($content['item'], 'media_id');
+    $placeholder = implode(',', array_fill(0, count($media_ids), '%s'));
+    $sql = "SELECT `id`,`post_id`,`title`,`weixin_id`,`fetch_time`
+            FROM `{$wpdb->prefix}mm_weixin`
+            WHERE `weixin_id` IN ($placeholder)";
+    $results = $wpdb->get_results($wpdb->prepare($sql, $media_ids), ARRAY_A);
+
+    // 标记导入过的文章
+    $content['item'] = array_map(function ($item) use ($results) {
+      $media_id = $item['media_id'];
+      $item['content']['news_item'] = array_map(function ($news) use ($media_id, $results) {
+        foreach ($results as $log) {
+          if ($log['weixin_id'] == $media_id && $log['title'] == $news['title']) {
+            $news['post_id'] = $log['post_id'];
+            $news['fetch_time'] = $log['fetch_time'];
+            break;
+          }
+        }
+        return $news;
+      }, $item['content']['news_item']);
+      return $item;
+    }, $content['item']);
+
     $this->output($content);
   }
 
   /**
-   *
+   * 获取微信公众平台 token
    */
   public function fetchToken() {
     $token = get_option(self::PREFIX . 'token');
@@ -63,33 +91,52 @@ class Weixin {
     $response = file_get_contents($url);
     $response = json_decode($response, true);
     if ($response['errcode']) {
-      throw new Exception('获取 token 失败', 1000);
+      throw new Exception('fetch token failed', 1000);
     }
     $response['expires_in'] = time() + $response['expires_in'];
     add_option(Weixin::PREFIX . 'token', json_encode($response));
     return $response['access_token'];
   }
 
+  public function importArticle() {
+    $row = $this->getPostData();
+    $post = [
+      'ID' => $row['post_id'],
+      'post_author' => 1,
+      'post_date' => substr($row['update_time'], 0, 10),
+      'post_content' => $row['content'],
+      'post_excerpt' => $row['digest'],
+      'post_title' => $row['title'],
+      'post_status' => 'publish',
+    ];
+    $result = wp_insert_post($post, true);
+
+    if ($result && is_int($result)) {
+      $this->output([
+        'code' => 0,
+        'msg' => '导入成功',
+        'post_id' => $result,
+        'fetch_time' => date('Y-m-d H:i:s'),
+      ]);
+    } else {
+      $this->output([
+        'code' => 4000,
+        'msg' => $result['errors'],
+      ]);
+    }
+  }
+
   public function saveConfig() {
     $app_id = $_REQUEST['app_id'];
     $app_secret = $_REQUEST['app_secret'];
 
-    add_option(Weixin::PREFIX . 'app_id', $app_id);
-    add_option(Weixin::PREFIX . 'app_secret', $app_secret);
+    update_option(Weixin::PREFIX . 'app_id', $app_id);
+    update_option(Weixin::PREFIX . 'app_secret', $app_secret);
 
     $this->output([
       'code' => 0,
       'msg' => '保存成功',
     ]);
-  }
-
-  static $instance;
-
-  static public function getInstance($entry) {
-    if (is_null(self::$instance)) {
-      self::$instance = new self($entry);
-    }
-    return self::$instance;
   }
 
   private function output($content, $type = self::OUTPUT_TYPE_JSON) {
@@ -102,5 +149,19 @@ class Weixin {
         echo $content;
     }
     wp_die();
+  }
+
+  private function getPostData() {
+    $data = file_get_contents('php://input');
+    return json_decode($data, true);
+  }
+
+  static $instance;
+
+  static public function getInstance($entry) {
+    if (is_null(self::$instance)) {
+      self::$instance = new self($entry);
+    }
+    return self::$instance;
   }
 }
