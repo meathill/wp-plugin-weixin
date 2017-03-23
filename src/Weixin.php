@@ -95,9 +95,12 @@ class Weixin {
   private function output($content, $type = self::OUTPUT_TYPE_JSON) {
     switch ($type) {
       case self::OUTPUT_TYPE_JSON:
-        $content = json_encode($content);
+        if (is_array($content)) {
+          $content = json_encode($content);
+        }
         header('Content-type: application/json, charset=UTF-8');
         echo $content;
     }
+    wp_die();
   }
 }
