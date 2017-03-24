@@ -7,6 +7,7 @@
  */
 
 namespace MasterMeat;
+use DOMDocument;
 use Exception;
 
 
@@ -38,7 +39,7 @@ class Post {
   }
 
   public function __get($name) {
-    if (array_key_exists($this->attr, $name)) {
+    if (array_key_exists($name, $this->attr)) {
       return $this->attr[$name];
     }
     return null;
@@ -48,52 +49,73 @@ class Post {
     $this->attr[$name] = $value;
   }
 
-  public function fetchImage() {
-
+  public function fetchImage($src) {
+    $image = new Image($src, $this->post_date);
+    return $image->fetch();
   }
 
   public function insert() {
-    // 先抓取缩略图
-    $thumbnail_id = 0;
-    if ($this->post_thumbnail) {
-      $thumbnail_id = $this->fetchThumbnail($this->post_thumbnail, $this->weixin_id);
-    }
-    // 然后抓取所有图片
+    // 先抓取所有图片
     $this->post_content = $this->replaceIMGSrc();
 
-    // 最后再填入文章
+    // 然后再填入文章
     $this->ID = wp_insert_post($this->attr, true);
     if (!$this->is_OK()) {
       $this->errors = $this->ID['errors'];
+      return;
     }
-    set_post_thumbnail($this->ID, $thumbnail_id);
+
+    // 最后抓取缩略图
+    if ($this->post_thumbnail) {
+      $this->fetchThumbnail($this->post_thumbnail);
+    }
   }
 
   public function is_OK() {
     return $this->ID && is_int($this->ID);
   }
 
-  private function fetchThumbnail($post_thumbnail, $weixin_id) {
-    $dir = wp_upload_dir($this->post_date);
-    $filename = "${dir['path']}/${weixin_id}_thumbnail_";
-    $count = 0;
-    while (file_exists("${filename}${count}.jpg")) {
-      $count++;
-    }
-    $filename = "${filename}${count}.jpg";
-    file_put_contents($filename, file_get_contents($this->post_thumbnail));
+  private function fetchThumbnail($post_thumbnail) {
+    $filename = $this->fetchImage($post_thumbnail);
+    $this->insertAttachment($filename);
+  }
 
-    $result = wp_insert_attachment([
-      'post_title' => $this->post_title
-    ], $filename, 0, true);
+  private function insertAttachment($filename) {
+    $filetype = wp_check_filetype($filename, null);
+    $attachment_id = wp_insert_attachment([
+      'guid' => $filename,
+      'post_mime_type' => $filetype,
+      'post_title' => $this->post_title,
+      'post_content' => '',
+      'post_status' => 'inherit'
+    ], $filename, $this->ID);
 
-    if (!is_int($result)) {
-      throw new Exception('抓取头图失败。' . json_encode($result['errors']), 400011);
-    }
-    return $result;
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    $attach_data = wp_generate_attachment_metadata($attachment_id, $filename);
+    wp_update_attachment_metadata($attachment_id, $attach_data);
+
+    set_post_thumbnail($this->ID, $attachment_id);
+
+    return $attachment_id;
   }
 
   private function replaceIMGSrc() {
-    return preg_replace_callback('~<img[^>]*(?:data-)?src="(.*?)"[^>]*/>~', [$this, 'fetchImage'], $this->post_content);
+    $doc = new DOMDocument('1.0', 'UTF-8');
+    $doc->loadHTML('<meta http-equiv="Content-Type" content="text/html; charset=utf-8">' . $this->post_content);
+    $imgs = $doc->getElementsByTagName('img');
+    foreach ($imgs as $img) {
+      $src = $img->getAttribute('data-src');
+      if (!$src) {
+        continue;
+      }
+      $url = $this->fetchImage($src);
+      $img->setAttribute('data-src', $url);
+      $img->setAttribute('class', implode(' ', [$img->getAttribute('class'), 'lazyload']));
+    }
+    $iframes = $doc->getElementsByTagName('iframe');
+    foreach ($iframes as $iframe) {
+      $iframe->setAttribute('class', implode(' ', [$iframe->getAttribute('class'), 'lazyload']));
+    }
+    return $doc->saveHTML();
   }
 }

@@ -17,6 +17,7 @@ class Weixin {
   const PREFIX = 'mm_weixin_';
 
   const OUTPUT_TYPE_JSON = 'json';
+  const OUTPUT_TYPE_JPEG = 'jpeg';
 
   public function __construct($entry) {
     $this->init_hooks($entry);
@@ -30,9 +31,19 @@ class Weixin {
     add_action('plugins_loaded', [$worker, 'checkDB']);
     add_action('admin_menu', [$menu, 'init']);
 
+    add_action('admin_post_mm_weixin_fetch_image', [$this, 'fetchImage']);
+
     add_action('wp_ajax_mm_weixin_save_config', [$this, 'saveConfig']);
     add_action('wp_ajax_mm_weixin_fetch_news_list', [$this, 'fetchNewsList']);
     add_action('wp_ajax_mm_weixin_import_article', [$this, 'importArticle']);
+  }
+
+  public function fetchImage() {
+    $src = $_REQUEST['src'];
+    $date = $_REQUEST['update_time'];
+    $image = new Image($src, $date);
+    $image->fetch();
+    $this->output($image->path, self::OUTPUT_TYPE_JPEG);
   }
 
   public function fetchNewsList() {
@@ -139,6 +150,13 @@ class Weixin {
         }
         header('Content-type: application/json, charset=UTF-8');
         echo $content;
+        break;
+
+      case self::OUTPUT_TYPE_JPEG:
+        header('Content-Type: image/jpeg');
+        header('Content-Length: ' . filesize($content));
+        readfile($content);
+        break;
     }
     wp_die();
   }
