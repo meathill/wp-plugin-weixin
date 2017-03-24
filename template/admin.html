@@ -22,11 +22,6 @@
           </el-pagination>
         </el-row>
         <el-table :data="items" border>
-          <el-table-column label="封面图片">
-            <template scope="scope">
-              <img :src="scope.row.thumb_url" class="img-thumbnail">
-            </template>
-          </el-table-column>
           <el-table-column label="标题">
             <template scope="scope">
               <a :href="scope.row.url" v-text="scope.row.title" target="_blank"></a>

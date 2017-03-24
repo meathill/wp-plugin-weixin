@@ -100,28 +100,20 @@ class Weixin {
 
   public function importArticle() {
     $row = $this->getPostData();
-    $post = [
-      'ID' => $row['post_id'],
-      'post_author' => 1,
-      'post_date' => substr($row['update_time'], 0, 10),
-      'post_content' => $row['content'],
-      'post_excerpt' => $row['digest'],
-      'post_title' => $row['title'],
-      'post_status' => 'publish',
-    ];
-    $result = wp_insert_post($post, true);
+    $post = new Post($row);
+    $post->insert();
 
-    if ($result && is_int($result)) {
+    if ($post->is_ok()) {
       $this->output([
         'code' => 0,
         'msg' => '导入成功',
-        'post_id' => $result,
+        'post_id' => $post->ID,
         'fetch_time' => date('Y-m-d H:i:s'),
       ]);
     } else {
       $this->output([
         'code' => 4000,
-        'msg' => $result['errors'],
+        'msg' => $post->errors,
       ]);
     }
   }
