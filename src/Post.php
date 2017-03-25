@@ -8,7 +8,7 @@
 
 namespace MasterMeat;
 use DOMDocument;
-use Exception;
+use DOMElement;
 
 
 /**
@@ -49,9 +49,10 @@ class Post {
     $this->attr[$name] = $value;
   }
 
-  public function fetchImage($src) {
+  public function fetchImage($src, $is_url = true) {
     $image = new Image($src, $this->post_date);
-    return $image->fetch();
+    $image->fetch();
+    return $is_url ? $image->url : $image->path;
   }
 
   public function insert() {
@@ -59,7 +60,7 @@ class Post {
     $this->post_content = $this->replaceIMGSrc();
 
     // 然后再填入文章
-    $this->ID = wp_insert_post($this->attr, true);
+    $this->ID = $this->attr['ID'] = wp_insert_post($this->attr, true);
     if (!$this->is_OK()) {
       $this->errors = $this->ID['errors'];
       return;
@@ -76,15 +77,15 @@ class Post {
   }
 
   private function fetchThumbnail($post_thumbnail) {
-    $filename = $this->fetchImage($post_thumbnail);
-    $this->insertAttachment($filename);
+    $path = $this->fetchImage($post_thumbnail, false);
+    $this->insertAttachment($path);
   }
 
   private function insertAttachment($filename) {
-    $filetype = wp_check_filetype($filename, null);
+    $fileType = wp_check_filetype($filename, null);
     $attachment_id = wp_insert_attachment([
       'guid' => $filename,
-      'post_mime_type' => $filetype,
+      'post_mime_type' => $fileType['type'],
       'post_title' => $this->post_title,
       'post_content' => '',
       'post_status' => 'inherit'
@@ -103,6 +104,7 @@ class Post {
     $doc = new DOMDocument('1.0', 'UTF-8');
     $doc->loadHTML('<meta http-equiv="Content-Type" content="text/html; charset=utf-8">' . $this->post_content);
     $imgs = $doc->getElementsByTagName('img');
+    /** @var DOMElement $img */
     foreach ($imgs as $img) {
       $src = $img->getAttribute('data-src');
       if (!$src) {
@@ -110,9 +112,11 @@ class Post {
       }
       $url = $this->fetchImage($src);
       $img->setAttribute('data-src', $url);
+      $img->setAttribute('src', $url);
       $img->setAttribute('class', implode(' ', [$img->getAttribute('class'), 'lazyload']));
     }
     $iframes = $doc->getElementsByTagName('iframe');
+    /** @var DOMElement $iframe */
     foreach ($iframes as $iframe) {
       $iframe->setAttribute('class', implode(' ', [$iframe->getAttribute('class'), 'lazyload']));
     }

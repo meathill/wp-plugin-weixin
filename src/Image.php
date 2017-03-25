@@ -34,12 +34,11 @@ class Image {
     $url = $dir['url'] . '/' . $filename;
     $filename = $dir['path'] . '/' . $filename;
     $this->path = $filename;
+    $this->url = $url;
     if (file_exists($filename)) {
-      $this->url = $url;
       return $url;
     }
     file_put_contents($filename, file_get_contents($this->src));
-    $this->url = $url;
     return $url;
   }
 
