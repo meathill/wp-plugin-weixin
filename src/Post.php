@@ -28,7 +28,7 @@ class Post {
   public function __construct($attr) {
     $this->attr = [
       'ID' => $attr['post_id'],
-      'weixin_id' => $attr['weixin_id'],
+      'weixin_id' => $attr['media_id'],
       'post_author' => 1,
       'post_date' => substr($attr['update_time'], 0, 10),
       'post_content' => $attr['content'],
@@ -71,6 +71,9 @@ class Post {
     if ($this->post_thumbnail) {
       $this->fetchThumbnail($this->post_thumbnail);
     }
+
+    // 保留记录
+    $this->record();
   }
 
   public function is_OK() {
@@ -145,5 +148,16 @@ class Post {
     $classes = array_push(explode(' ', $img->getAttribute('class')), $className);
     $img->setAttribute('class', implode(' ', $classes));
     return $img;
+  }
+
+  private function record() {
+    global $wpdb;
+
+    $table = $wpdb->prefix . 'mm_weixin';
+    $now = date('Y-m-d H:i:s');
+    $sql = "INSERT INTO `${table}`
+            (`weixin_id`,`post_id`,`title`,`fetch_time`)
+            VALUE (%s,%d,%s,%s)";
+    $wpdb->query($wpdb->prepare($sql, $this->weixin_id, $this->ID, $this->post_title, $now));
   }
 }
