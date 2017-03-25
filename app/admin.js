@@ -11,6 +11,7 @@ let admin = new Vue({
   data: {
     activeName: 'weixin-article-list',
     items: [],
+    page: 1,
     pageSize: 20,
     settings: {
       app_id: '',
@@ -19,7 +20,8 @@ let admin = new Vue({
     }
   },
   methods: {
-    fetch(page = 0) {
+    fetch(page) {
+      page = isNaN(page) ? 0 : page;
       this.$refs.fetchButton.loading = true;
       this.$http.get(ajaxurl, {
         params: {
@@ -40,12 +42,14 @@ let admin = new Vue({
             });
             return memo.concat(news);
           }, []);
-          this.$refs.pagination.total = response.total_count;
           this.$refs.fetchButton.loading = false;
+          setTimeout(() => {
+            this.$refs.pagination.total = response.total_count;
+          }, 10);
         });
     },
     importArticle(row, index) {
-      this.items[index].fetching = true;
+      this.$refs['importButton' + index].loading = true;
       this.$http.post(ajaxurl, row, {
         params: {
           action: 'mm_weixin_import_article'
@@ -55,11 +59,11 @@ let admin = new Vue({
           return response.json();
         })
         .then( response => {
-          this.items[index].fetching = false;
+          this.$refs['importButton' + index].loading = false;
           let isSuccess = response.code === 0;
           if (isSuccess) {
-            row.post_id = response.post_id;
-            row.fetch_time = response.fetch_time;
+            this.items[index].post_id = response.post_id;
+            this.items[index].fetch_time = response.fetch_time;
           }
           this.$message({
             type: isSuccess ? 'success' : 'error',
@@ -91,8 +95,11 @@ let admin = new Vue({
       }
       return data;
     },
-    turnToPage() {
-      this.fetch(this.$refs.pagination.currentPage - 1);
+    turnToPage(page) {
+      if (this.page !== page) {
+        this.page = page;
+        this.fetch(page - 1);
+      }
     }
   },
   mounted() {
