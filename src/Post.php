@@ -19,6 +19,7 @@ use DOMElement;
  * @property string post_date
  */
 class Post {
+  const META = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
   protected $attr;
   protected $ID;
 
@@ -49,21 +50,21 @@ class Post {
     $this->attr[$name] = $value;
   }
 
-  public function fetchImage($src, $is_url = true) {
-    $image = new Image($src, $this->post_date);
-    $image->fetch();
-    return $is_url ? $image->url : $image->path;
-  }
-
   public function insert() {
+    require_once ABSPATH . 'wp-admin/includes/image.php';
     // 先抓取所有图片
-    $this->post_content = $this->replaceIMGSrc();
+    list($this->post_content, $images) = $this->replaceIMGSrc();
 
     // 然后再填入文章
     $this->ID = $this->attr['ID'] = wp_insert_post($this->attr, true);
     if (!$this->is_OK()) {
       $this->errors = $this->ID['errors'];
       return;
+    }
+
+    /** @var Image $image */
+    foreach ($images as $image) {
+      $image->insertAttachment($this->ID);
     }
 
     // 最后抓取缩略图
@@ -76,33 +77,26 @@ class Post {
     return $this->ID && is_int($this->ID);
   }
 
-  private function fetchThumbnail($post_thumbnail) {
-    $path = $this->fetchImage($post_thumbnail, false);
-    $this->insertAttachment($path);
+  /**
+   * @param string $src
+   * @return Image
+   */
+  private function fetchImage($src) {
+    $image = new Image($src, $this->post_date);
+    $image->fetch();
+    return $image;
   }
 
-  private function insertAttachment($filename) {
-    $fileType = wp_check_filetype($filename, null);
-    $attachment_id = wp_insert_attachment([
-      'guid' => $filename,
-      'post_mime_type' => $fileType['type'],
-      'post_title' => $this->post_title,
-      'post_content' => '',
-      'post_status' => 'inherit'
-    ], $filename, $this->ID);
-
-    require_once ABSPATH . 'wp-admin/includes/image.php';
-    $attach_data = wp_generate_attachment_metadata($attachment_id, $filename);
-    wp_update_attachment_metadata($attachment_id, $attach_data);
-
+  private function fetchThumbnail($post_thumbnail) {
+    $image = $this->fetchImage($post_thumbnail);
+    $attachment_id = $image->insertAttachment($this->ID);
     set_post_thumbnail($this->ID, $attachment_id);
-
-    return $attachment_id;
   }
 
   private function replaceIMGSrc() {
+    $images = [];
     $doc = new DOMDocument('1.0', 'UTF-8');
-    $doc->loadHTML('<meta http-equiv="Content-Type" content="text/html; charset=utf-8">' . $this->post_content);
+    $doc->loadHTML(self::META . $this->post_content);
     $imgs = $doc->getElementsByTagName('img');
     /** @var DOMElement $img */
     foreach ($imgs as $img) {
@@ -110,16 +104,46 @@ class Post {
       if (!$src) {
         continue;
       }
-      $url = $this->fetchImage($src);
-      $img->setAttribute('data-src', $url);
-      $img->setAttribute('src', $url);
-      $img->setAttribute('class', implode(' ', [$img->getAttribute('class'), 'lazyload']));
+      $image = $this->fetchImage($src);
+      $img->setAttribute('data-src', $image->url);
+      $img->setAttribute('src', $image->url);
+      $this->addClass($img, 'lazyload');
+      $images[] = $image;
     }
     $iframes = $doc->getElementsByTagName('iframe');
     /** @var DOMElement $iframe */
     foreach ($iframes as $iframe) {
-      $iframe->setAttribute('class', implode(' ', [$iframe->getAttribute('class'), 'lazyload']));
+      $this->addClass($iframe, 'lazyload');
+    }
+    return [$doc->saveHTML(), $images];
+  }
+
+  static public function removeSRC($content) {
+    $doc = new DOMDocument('1.0', 'UTF-8');
+    @$doc->loadHTML(self::META . $content);
+    $imgs = $doc->getElementsByTagName('img');
+    /** @var DOMElement $img */
+    foreach ($imgs as $img) {
+      if ($img->hasAttribute('data-src')) {
+        $img->removeAttribute('src');
+      }
+    }
+    $iframes = $doc->getElementsByTagName('iframe');
+    /** @var DOMElement $iframe */
+    foreach ($iframes as $iframe) {
+      $iframe->removeAttribute('src');
     }
     return $doc->saveHTML();
+  }
+
+  /**
+   * @param DOMElement $img
+   * @param string $className
+   * @return string
+   */
+  private function addClass($img, $className) {
+    $classes = array_push(explode(' ', $img->getAttribute('class')), $className);
+    $img->setAttribute('class', implode(' ', $classes));
+    return $img;
   }
 }

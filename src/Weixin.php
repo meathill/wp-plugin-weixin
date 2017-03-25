@@ -36,6 +36,8 @@ class Weixin {
     add_action('wp_ajax_mm_weixin_save_config', [$this, 'saveConfig']);
     add_action('wp_ajax_mm_weixin_fetch_news_list', [$this, 'fetchNewsList']);
     add_action('wp_ajax_mm_weixin_import_article', [$this, 'importArticle']);
+
+    add_filter('the_content', 'MasterMeat\\Post::removeSRC', 100);
   }
 
   public function fetchImage() {

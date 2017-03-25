@@ -38,6 +38,6 @@ class Worker {
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql);
 
-    add_option(self::DB_VERSION_NAME, self::DB_VERSION);
+    update_option(self::DB_VERSION_NAME, self::DB_VERSION);
   }
 }
