@@ -145,7 +145,9 @@ class Post {
    * @return string
    */
   private function addClass($img, $className) {
-    $classes = array_push(explode(' ', $img->getAttribute('class')), $className);
+    $classes = $img->getAttribute('class');
+    $classes = $classes ? explode(' ', $classes) : [];
+    $classes[] = $className;
     $img->setAttribute('class', implode(' ', $classes));
     return $img;
   }
