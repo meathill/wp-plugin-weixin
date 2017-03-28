@@ -9,9 +9,12 @@
 namespace MasterMeat\admin;
 
 
+use MasterMeat\Request;
 use MasterMeat\Template;
+use MasterMeat\Token;
 use MasterMeat\Weixin;
 use PDO;
+use WP_Error;
 use WP_Post;
 
 class Editor {
@@ -68,6 +71,7 @@ class Editor {
   /**
    * @param $ID
    * @param WP_Post $post
+   * @return bool|WP_Error
    */
   public function sync($ID, $post) {
     $is_sync = get_post_meta($ID, self::FIELD, true);
@@ -90,6 +94,44 @@ class Editor {
       return;
     }
 
-    $token = '';
+    $token = Token::fetchToken();
+    $data = [
+      'articles' => [
+        [
+          'title' => $post->post_title,
+          'thumb_media_id' => '',
+          'author' => $post->post_author,
+          'digest' => $post->post_excerpt,
+          'show_cover_pic' => 1,
+          'content' => $post->post_content,
+          'content_source_url' => get_permalink($post),
+        ]
+      ]
+    ];
+    if ($row['weixin_id']) {
+      $api = 'https://api.weixin.qq.com/cgi-bin/material/update_news?access_token=' . $token;
+      $data['media_id'] = $row['weixin_id'];
+      $data['index'] = 0;
+    } else {
+      $api = 'https://api.weixin.qq.com/cgi-bin/material/add_news?access_token=' . $token;
+    }
+
+    $result = Request::post($api, $data);
+    if (array_key_exists('errcode', $result) && $result['errcode'] != 0) {
+      return new WP_Error(30000, $result['errmsg']);
+    }
+    if ($result['media_id']) {
+      $sql = "INSERT INTO ${table}
+              (`weixin_id`,`post_id`,`title`,`fetch_time`,`status`)
+              VALUE (:media_id, :post_id, :title, :fetch_time, 1)";
+      $state = $pdo->prepare($sql);
+      $state->execute([
+        ':media_id' => $result['media_id'],
+        ':post_id' => $ID,
+        ':title' => $post->post_title,
+        ':fetch_time' => date('Y-m-d H:i:s'),
+      ]);
+    }
+    return true;
   }
 }

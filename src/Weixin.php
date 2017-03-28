@@ -46,7 +46,7 @@ class Weixin {
   public function fetchNewsList() {
     global $wpdb;
 
-    $token = $this->fetchToken();
+    $token = Token::fetchToken();
     $page = (int)$_REQUEST['page'];
     $api = 'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token=' . $token;
     $content = Request::post($api, [
@@ -81,29 +81,6 @@ class Weixin {
     }, $content['item']);
 
     $this->output($content);
-  }
-
-  /**
-   * 获取微信公众平台 token
-   */
-  public function fetchToken() {
-    $token = get_option(self::PREFIX . 'token');
-    $token = json_decode($token, true);
-    if ($token['expires_in'] > time()) {
-      return $token['access_token'];
-    }
-
-    $app_id = get_option(self::PREFIX . 'app_id');
-    $app_secret = get_option(self::PREFIX . 'app_secret');
-    $url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${app_id}&secret=${app_secret}";
-    $response = file_get_contents($url);
-    $response = json_decode($response, true);
-    if ($response['errcode']) {
-      throw new Exception('fetch token failed', 1000);
-    }
-    $response['expires_in'] = time() + $response['expires_in'];
-    add_option(Weixin::PREFIX . 'token', json_encode($response));
-    return $response['access_token'];
   }
 
   public function importArticle() {
