@@ -8,7 +8,7 @@ namespace MasterMeat;
  * Date: 2017/3/20
  * Time: 12:31
  */
-class Worker {
+class DB {
   const DB_VERSION = '1.0.1';
   const DB_VERSION_NAME = 'mm_weixin_db_version';
 

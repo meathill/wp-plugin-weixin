@@ -10,6 +10,7 @@ namespace MasterMeat;
 
 
 use Exception;
+use MasterMeat\admin\Editor;
 use MasterMeat\admin\Menu;
 
 class Weixin {
@@ -20,32 +21,26 @@ class Weixin {
   const OUTPUT_TYPE_JPEG = 'jpeg';
 
   public function __construct($entry) {
+    $this->init_components($entry);
     $this->init_hooks($entry);
   }
 
-  private function init_hooks($entry) {
+  private function init_components($entry) {
     $dir = substr($entry, 0, strrpos($entry, '/') + 1);
-    $worker = new Worker();
+    $editor = new Editor($dir);
     $menu = new Menu($dir);
-    register_activation_hook($entry, [$worker, 'install']);
-    add_action('plugins_loaded', [$worker, 'checkDB']);
-    add_action('admin_menu', [$menu, 'init']);
+  }
 
-    add_action('admin_post_mm_weixin_fetch_image', [$this, 'fetchImage']);
+  private function init_hooks($entry) {
+    $db = new DB();
+    register_activation_hook($entry, [$db, 'install']);
+    add_action('plugins_loaded', [$db, 'checkDB']);
 
     add_action('wp_ajax_mm_weixin_save_config', [$this, 'saveConfig']);
     add_action('wp_ajax_mm_weixin_fetch_news_list', [$this, 'fetchNewsList']);
     add_action('wp_ajax_mm_weixin_import_article', [$this, 'importArticle']);
 
     add_filter('the_content', 'MasterMeat\\Post::removeSRC', 100);
-  }
-
-  public function fetchImage() {
-    $src = $_REQUEST['src'];
-    $date = $_REQUEST['update_time'];
-    $image = new Image($src, $date);
-    $image->fetch();
-    $this->output($image->path, self::OUTPUT_TYPE_JPEG);
   }
 
   public function fetchNewsList() {

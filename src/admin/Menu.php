@@ -16,6 +16,7 @@ class Menu {
 
   public function __construct($dir) {
     $this->dir = $dir;
+    add_action('admin_menu', [$this, 'init']);
   }
 
   public function init() {
