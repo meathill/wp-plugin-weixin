@@ -19,7 +19,6 @@ use DOMElement;
  * @property string post_date
  */
 class Post {
-  const META = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
   protected $attr;
   protected $ID;
 
@@ -98,8 +97,7 @@ class Post {
 
   private function replaceIMGSrc() {
     $images = [];
-    $doc = new DOMDocument('1.0', 'UTF-8');
-    $doc->loadHTML(self::META . $this->post_content);
+    $doc = new Document($this->post_content);
     $imgs = $doc->getElementsByTagName('img');
     /** @var DOMElement $img */
     foreach ($imgs as $img) {
@@ -110,20 +108,62 @@ class Post {
       $image = $this->fetchImage($src);
       $img->setAttribute('data-src', $image->url);
       $img->setAttribute('src', $image->url);
-      $this->addClass($img, 'lazyload');
+      $doc->addClass($img, 'lazyload');
       $images[] = $image;
     }
     $iframes = $doc->getElementsByTagName('iframe');
     /** @var DOMElement $iframe */
     foreach ($iframes as $iframe) {
-      $this->addClass($iframe, 'lazyload');
+      $doc->addClass($iframe, 'lazyload');
     }
     return [$doc->saveHTML(), $images];
   }
 
+  private function record() {
+    global $wpdb;
+
+    $table = $wpdb->prefix . 'mm_weixin';
+    $now = date('Y-m-d H:i:s');
+    $sql = "INSERT INTO `${table}`
+            (`weixin_id`,`post_id`,`title`,`fetch_time`)
+            VALUE (%s,%d,%s,%s)";
+    $wpdb->query($wpdb->prepare($sql, $this->weixin_id, $this->ID, $this->post_title, $now));
+  }
+
+  public function upload_imgs($token) {
+    $images = get_attached_media('image', $this->ID);
+    $doc = new Document($this->post_content);
+    $imgs = $doc->getElementsByTagName('img');
+    $hostname = get_home_url();
+    $is_this_site = "~^${hostname}~";
+    /** @var DOMElement $img */
+    foreach ($imgs as $img) {
+      $src = $img->getAttribute('src');
+      if (!preg_match($is_this_site, $src)) {
+        continue;
+      }
+      $attachment = null;
+      foreach ($images as $image) {
+        if ($image->url == $src) {
+          $attachment = $image;
+          break;
+        }
+      }
+      if ($attachment && $attachment->description) {
+        $newURL = $attachment->description;
+      } else {
+        $newURL = Request::upload('https://api.weixin.qq.com/cgi-bin/media/uploadimg?access_token='. $token, $attachment->guid);
+        wp_update_attachment_metadata($attachment->ID, [
+          'description' => $newURL,
+        ]);
+      }
+      $img->setAttribute('src', $newURL);
+    }
+    $this->post_content = $doc->saveHTML();
+  }
+
   static public function removeSRC($content) {
-    $doc = new DOMDocument('1.0', 'UTF-8');
-    @$doc->loadHTML(self::META . $content);
+    $doc = new Document($content);
     $imgs = $doc->getElementsByTagName('img');
     /** @var DOMElement $img */
     foreach ($imgs as $img) {
@@ -137,29 +177,5 @@ class Post {
       $iframe->removeAttribute('src');
     }
     return $doc->saveHTML();
-  }
-
-  /**
-   * @param DOMElement $img
-   * @param string $className
-   * @return string
-   */
-  private function addClass($img, $className) {
-    $classes = $img->getAttribute('class');
-    $classes = $classes ? explode(' ', $classes) : [];
-    $classes[] = $className;
-    $img->setAttribute('class', implode(' ', $classes));
-    return $img;
-  }
-
-  private function record() {
-    global $wpdb;
-
-    $table = $wpdb->prefix . 'mm_weixin';
-    $now = date('Y-m-d H:i:s');
-    $sql = "INSERT INTO `${table}`
-            (`weixin_id`,`post_id`,`title`,`fetch_time`)
-            VALUE (%s,%d,%s,%s)";
-    $wpdb->query($wpdb->prepare($sql, $this->weixin_id, $this->ID, $this->post_title, $now));
   }
 }

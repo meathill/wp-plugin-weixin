@@ -9,12 +9,13 @@
 namespace MasterMeat\admin;
 
 
+use Exception;
+use MasterMeat\Post;
 use MasterMeat\Request;
 use MasterMeat\Template;
 use MasterMeat\Token;
 use MasterMeat\Weixin;
 use PDO;
-use WP_Error;
 use WP_Post;
 
 class Editor {
@@ -28,7 +29,7 @@ class Editor {
     $this->dir = $dir;
     add_action('add_meta_boxes', [$this, 'init']);
     add_action('save_post', [$this, 'save'], 10, 1);
-    add_action('publish_post', [$this, 'sync'], 10, 2);
+    add_action('publish_post', [$this, 'sync'], 100, 2);
   }
 
   public function init() {
@@ -43,8 +44,9 @@ class Editor {
   }
 
   public function render() {
+    $post_id = get_the_ID();
     $template = new Template($this->dir);
-    $is_sync = get_option(Weixin::PREFIX . 'sync');
+    $is_sync = get_post_meta($post_id, self::FIELD, true);
     wp_nonce_field( plugin_basename( $this->dir ), self::NONCE);
     echo $template->render('editor.html', [
       'is_sync' => $is_sync,
@@ -71,7 +73,7 @@ class Editor {
   /**
    * @param $ID
    * @param WP_Post $post
-   * @return bool|WP_Error
+   * @throws Exception
    */
   public function sync($ID, $post) {
     $is_sync = get_post_meta($ID, self::FIELD, true);
@@ -90,11 +92,17 @@ class Editor {
     $state = $pdo->prepare($sql);
     $state->execute([':id' => $ID]);
     $row = $state->fetch(PDO::FETCH_ASSOC);
-    if ($row['status'] == 0) { // 从微信抓回来的，为避免影响同图文素材内其它文章，不做更新
+    if ($row && $row['status'] == 0) { // 从微信抓回来的，为避免影响同图文素材内其它文章，不做更新
       return;
     }
 
+    // 先上传图片
     $token = Token::fetchToken();
+    $my_post = new Post([
+      'post_id' => $ID,
+      'content' => $post->post_content
+    ]);
+    $my_post->upload_imgs($token);
     $data = [
       'articles' => [
         [
@@ -103,7 +111,7 @@ class Editor {
           'author' => $post->post_author,
           'digest' => $post->post_excerpt,
           'show_cover_pic' => 1,
-          'content' => $post->post_content,
+          'content' => $my_post->post_content,
           'content_source_url' => get_permalink($post),
         ]
       ]
@@ -118,7 +126,7 @@ class Editor {
 
     $result = Request::post($api, $data);
     if (array_key_exists('errcode', $result) && $result['errcode'] != 0) {
-      return new WP_Error(30000, $result['errmsg']);
+      throw new Exception($result['errmsg'], 30000);
     }
     if ($result['media_id']) {
       $sql = "INSERT INTO ${table}
@@ -132,6 +140,5 @@ class Editor {
         ':fetch_time' => date('Y-m-d H:i:s'),
       ]);
     }
-    return true;
   }
 }
