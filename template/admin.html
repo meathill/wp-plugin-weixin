@@ -10,70 +10,10 @@
 <body>
 
 <h1>肉大师微信助手 - 设置</h1>
-<div id="mm-weixin-admin">
-  <template>
-    <el-tabs v-model="activeName" type="card">
-      <el-tab-pane label="抓取文章" name="weixin-article-list">
-        <el-row type="flex" class="mb-1" justify="space-between">
-          <el-button type="primary" @click="fetch" ref="fetchButton">获取文章列表</el-button>
-          <el-pagination layout="prev, pager, next" ref="pagination" :page-size="20" @current-change="turnToPage">
-          </el-pagination>
-        </el-row>
-        <el-table :data="items" border>
-          <el-table-column label="标题">
-            <template scope="scope">
-              <a :href="scope.row.url" v-text="scope.row.title" target="_blank"></a>
-            </template>
-          </el-table-column>
-          <el-table-column prop="author" label="作者"></el-table-column>
-          <el-table-column prop="digest" label="摘要"></el-table-column>
-          <el-table-column label="更新时间">
-            <template scope="scope">
-              <time :datetime="scope.row.update_time" v-text="scope.row.update_time"></time>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作">
-            <template scope="scope">
-              <template v-if="scope.row.post_id">
-                <el-popover placement="top-start" title="导入信息" trigger="hover">
-                  <el-tag slot="reference" type="success">已导入</el-tag>
-                  导入时间：<time :datetime="scope.row.fetch_time" v-text="scope.row.fetch_time"></time><br>
-                  <a :href="'/?p=' + scope.row.post_id" target="_blank">前往预览</a>
-                </el-popover>
-              </template>
-              <el-button @click="importArticle(scope.row, scope.$index)" :ref="'importButton' + scope.$index">导入</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-
-      </el-tab-pane>
-      <el-tab-pane label="设置" name="settings">
-        <el-form ref="form" label-width="5rem" v-model="settings">
-          <el-form-item label="AppID">
-            <el-input name="app_id" v-model="settings.app_id" value="{{app_id}}" data-name="app_id"></el-input>
-          </el-form-item>
-          <el-form-item label="AppSecret">
-            <el-input name="app_id" v-model="settings.app_secret" value="{{app_secret}}" data-name="app_secret"></el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" ref="submitButton" @click="saveSettings">保存</el-button>
-          </el-form-item>
-        </el-form>
-      </el-tab-pane>
-      <el-tab-pane label="帮助" name="help">
-        <h2>注意事项</h2>
-        <ol>
-          <li>微信文章默认启用 lazyload，抓回来也保持着 lazyload，所以请保证文章页启用了 lazyload。</li>
-        </ol>
-        <h2>关于</h2>
-        <p>肉大师微信助手 v0.1</p>
-        <p>作者：<a href="//meathill.com/">Meathill</a> </p>
-      </el-tab-pane>
-    </el-tabs>
-  </template>
+<div id="mm-weixin-admin" data-app-id="{{app_id}}" data-app-secret="{{app_secret}}">
 </div>
 
-<script src="/wp-content/plugins/master-meat-weixin/node_modules/vue/dist/vue.min.js"></script>
+<script src="/wp-content/plugins/master-meat-weixin/node_modules/vue/dist/vue.runtime.js"></script>
 <script src="/wp-content/plugins/master-meat-weixin/node_modules/vue-resource/dist/vue-resource.min.js"></script>
 <script src="/wp-content/plugins/master-meat-weixin/node_modules/element-ui/lib/index.js"></script>
 <script src="/wp-content/plugins/master-meat-weixin/node_modules/moment/min/moment-with-locales.min.js"></script>
