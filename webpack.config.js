@@ -37,7 +37,9 @@ module.exports = {
   },
   externals: {
     'vue': 'Vue',
+    'vuex': 'Vuex',
     'vue-resource': 'VueResource',
+    'vue-router': 'VueRouter',
     'moment': 'moment',
     'element-ui': 'ElementUI',
   },

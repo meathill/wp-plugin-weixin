@@ -3,12 +3,24 @@
  */
 
 import Vue from 'vue';
+import Vuex from 'vuex';
 import moment from 'moment';
 import App from './App.vue';
+import router from './router';
 
 moment.locale('zh-CN');
 
 let dom = document.getElementById('mm-weixin-admin');
-let app = new Vue(App).$mount(dom);
-app.settings.app_id = dom.dataset.appId;
-app.settings.app_secret = dom.dataset.appSecret;
+let init = {
+  app_id: dom.dataset.appId,
+  app_secret: dom.dataset.appSecret,
+};
+const store = new Vuex.Store({
+  state: init,
+});
+
+new Vue({
+  router,
+  store,
+  ...App,
+}).$mount(dom);
