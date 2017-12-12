@@ -1,25 +1,26 @@
 <template>
   <div>
-    <el-row type="flex" class="mb-1" justify="space-between">
+    <el-row type="flex" class="mb-1">
       <el-button type="primary" @click="fetch" @loading="loading">获取文章列表</el-button>
-      <el-pagination layout="prev, pager, next" :total="total" :page-size="20" @current-change="turnToPage">
+      <el-alert v-if="errorMsg" :title="errorMsg" type="error" show-icon class="mx-1"></el-alert>
+      <el-pagination layout="prev, pager, next" :total="total" :page-size="20" @current-change="turnToPage" class="ml-auto">
       </el-pagination>
     </el-row>
     <el-table :data="items" border>
       <el-table-column label="标题">
-        <template scope="scope">
+        <template slot-scope="scope">
           <a :href="scope.row.url" v-text="scope.row.title" target="_blank"></a>
         </template>
       </el-table-column>
       <el-table-column prop="author" label="作者"></el-table-column>
       <el-table-column prop="digest" label="摘要"></el-table-column>
       <el-table-column label="更新时间">
-        <template scope="scope">
+        <template slot-scope="scope">
           <time :datetime="scope.row.update_time" v-text="scope.row.update_time"></time>
         </template>
       </el-table-column>
       <el-table-column label="操作">
-        <template scope="scope">
+        <template slot-scope="scope">
           <template v-if="scope.row.post_id">
             <el-popover placement="top-start" title="导入信息" trigger="hover">
               <el-tag slot="reference" type="success">已导入</el-tag>
@@ -35,13 +36,13 @@
 </template>
 
 <script>
-  import Vuex from 'vuex';
+  import {mapState} from 'vuex';
 
   /* global ajaxurl */
 
   export default {
     computed: {
-      ...Vuex.mapState([
+      ...mapState([
         'app_id',
         'app_secret',
       ]),
@@ -56,6 +57,7 @@
         total: 0,
         // UI variables
         loading: false,
+        errorMsg: '',
       };
     },
     methods: {
@@ -71,6 +73,9 @@
             return response.json();
           })
           .then((response) => {
+            if (response.code !== 0) {
+              throw new Error(response.msg);
+            }
             this.items = response.item.reduce((memo, item) => {
               let news = item.content.news_item.map((one) => {
                 one.media_id = item.media_id;
@@ -83,6 +88,10 @@
             }, []);
             this.loading = false;
             this.total = response.total_count;
+          })
+          .catch((err) => {
+            console.log(err);
+            this.errorMsg = '抓取失败。原因：' + (err.message || err.msg);
           });
       },
       importArticle(row, index) {

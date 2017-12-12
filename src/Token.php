@@ -34,7 +34,11 @@ class Token {
     $response = file_get_contents($url);
     $response = json_decode($response, true);
     if ($response['errcode']) {
-      throw new Exception('fetch token failed', 1000);
+      Weixin::output([
+        'code' => 1,
+        'msg' => '获取 access_token 失败。' . $response['errmsg'],
+      ], 400);
+      exit();
     }
     $response['expires_in'] = time() + $response['expires_in'];
     add_option(Weixin::PREFIX . 'token', json_encode($response));

@@ -7,14 +7,14 @@
     </el-row>
     <el-table :data="items" border>
       <el-table-column label="用途">
-        <template scope="scope">
+        <template slot-scope="scope">
           <a :href="scope.row.url" v-text="scope.row.title" target="_blank"></a>
         </template>
       </el-table-column>
       <el-table-column prop="author" label="参数"></el-table-column>
       <el-table-column prop="digest" label="二维码"></el-table-column>
       <el-table-column label="创建时间">
-        <template scope="scope">
+        <template slot-scope="scope">
           <time :datetime="scope.row.update_time" v-text="scope.row.update_time"></time>
         </template>
       </el-table-column>

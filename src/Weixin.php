@@ -116,7 +116,7 @@ class Weixin {
     ]);
   }
 
-  private function output($content, $type = self::OUTPUT_TYPE_JSON) {
+  public static function output($content, $status = 200, $type = self::OUTPUT_TYPE_JSON) {
     switch ($type) {
       case self::OUTPUT_TYPE_JSON:
         if (is_array($content)) {
