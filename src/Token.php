@@ -39,8 +39,7 @@ class Token {
       Weixin::output([
         'code' => 1,
         'msg' => '获取 access_token 失败。' . $response['errmsg'],
-      ], 400);
-      exit();
+      ]);
     }
     $response['expires_in'] = time() + $response['expires_in'];
     update_option(Weixin::PREFIX . 'token', json_encode($response));
