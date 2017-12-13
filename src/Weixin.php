@@ -46,15 +46,23 @@ class Weixin {
   public function fetchNewsList() {
     global $wpdb;
 
-    $token = Token::fetchToken();
+    $token = Token::fetchToken(true);
     $page = (int)$_REQUEST['page'];
     $api = 'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token=' . $token;
     $content = Request::post($api, [
       'type' => 'news',
-      'offset' => $page * 20,
-      'count' => 20
+      'offset' => $page * 10,
+      'count' => 10
     ]);
     $content = json_decode($content, true);
+
+    // 检查抓取状态
+    if (array_key_exists('errcode', $content)) {
+      $this->output([
+        'code' => 2,
+        'msg' => '抓取失败。' .$content['errmsg'],
+      ]);
+    }
 
     // 取已经导入过的文章
     $media_ids = array_column($content['item'], 'media_id');
@@ -116,14 +124,13 @@ class Weixin {
     ]);
   }
 
-  public static function output($content, $status = 200, $type = self::OUTPUT_TYPE_JSON) {
+  public static function output($content, $type = self::OUTPUT_TYPE_JSON) {
     switch ($type) {
       case self::OUTPUT_TYPE_JSON:
-        if (is_array($content)) {
-          $content = json_encode($content);
-        }
-        header('Content-type: application/json, charset=UTF-8');
-        echo $content;
+        @wp_send_json([
+          'code' => 0,
+          'data' => $content,
+        ]);
         break;
 
       case self::OUTPUT_TYPE_JPEG:

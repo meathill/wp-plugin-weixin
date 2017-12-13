@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-row type="flex" class="mb-1">
-      <el-button type="primary" @click="fetch" @loading="loading">获取文章列表</el-button>
+      <el-button type="primary" @click="fetch" :loading="loading">获取文章列表</el-button>
       <el-alert v-if="errorMsg" :title="errorMsg" type="error" show-icon class="mx-1"></el-alert>
       <el-pagination layout="prev, pager, next" :total="total" :page-size="20" @current-change="turnToPage" class="ml-auto">
       </el-pagination>
@@ -36,6 +36,7 @@
 </template>
 
 <script>
+  import moment from 'moment';
   import {mapState} from 'vuex';
 
   /* global ajaxurl */
@@ -62,6 +63,8 @@
     },
     methods: {
       fetch(page) {
+        this.errorMsg = '';
+        this.loading = true;
         page = isNaN(page) ? 0 : page;
         this.$http.get(ajaxurl, {
           params: {
@@ -72,11 +75,11 @@
           .then((response) => {
             return response.json();
           })
-          .then((response) => {
-            if (response.code !== 0) {
-              throw new Error(response.msg);
+          .then(({code, data, total_count, msg}) => {
+            if (code !== 0) {
+              throw new Error(msg);
             }
-            this.items = response.item.reduce((memo, item) => {
+            this.items = data.item.reduce((memo, item) => {
               let news = item.content.news_item.map((one) => {
                 one.media_id = item.media_id;
                 one.post_id = one.post_id || '';
@@ -86,12 +89,14 @@
               });
               return memo.concat(news);
             }, []);
-            this.loading = false;
-            this.total = response.total_count;
+            this.total = total_count; // eslint-disable-line camelcase
           })
           .catch((err) => {
             console.log(err);
             this.errorMsg = '抓取失败。原因：' + (err.message || err.msg);
+          })
+          .then(() => {
+            this.loading = false;
           });
       },
       importArticle(row, index) {

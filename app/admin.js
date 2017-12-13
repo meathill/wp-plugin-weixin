@@ -17,6 +17,12 @@ let init = {
 };
 const store = new Vuex.Store({
   state: init,
+  mutations: {
+    setAppInfo(state, appId, appSecret) {
+      state.app_id = appId;
+      state.app_secret = appSecret;
+    },
+  },
 });
 
 new Vue({

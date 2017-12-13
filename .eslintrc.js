@@ -13,4 +13,7 @@ module.exports = {
       "experimentalObjectRestSpread": true
     },
   },
+  rules: {
+    'max-len': [0],
+  }
 };
