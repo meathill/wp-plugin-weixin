@@ -75,11 +75,11 @@
           .then((response) => {
             return response.json();
           })
-          .then(({code, data, total_count, msg}) => {
+          .then(({code, item, total_count, msg}) => {
             if (code !== 0) {
               throw new Error(msg);
             }
-            this.items = data.item.reduce((memo, item) => {
+            this.items = item.reduce((memo, item) => {
               let news = item.content.news_item.map((one) => {
                 one.media_id = item.media_id;
                 one.post_id = one.post_id || '';

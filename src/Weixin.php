@@ -127,10 +127,10 @@ class Weixin {
   public static function output($content, $type = self::OUTPUT_TYPE_JSON) {
     switch ($type) {
       case self::OUTPUT_TYPE_JSON:
-        @wp_send_json([
-          'code' => 0,
-          'data' => $content,
-        ]);
+        if (!array_key_exists('code', $content)) {
+          $content['code'] = 0;
+        }
+        @wp_send_json($content);
         break;
 
       case self::OUTPUT_TYPE_JPEG:
